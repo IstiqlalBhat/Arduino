@@ -693,7 +693,7 @@ Once you have everything set up and working:
 
 ---
 
-**Built with dedication from Kashmir to Clemson** 🚀
+**Built with love from Clemson** 🚀
 
 **Project by:** [Istiqlal Bhat](https://github.com/IstiqlalBhat)
 **Institution:** Clemson University
