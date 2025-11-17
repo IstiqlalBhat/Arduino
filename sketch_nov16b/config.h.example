@@ -1,0 +1,26 @@
+// Private Configuration File
+// Copy this file to config.h and fill in your credentials
+// DO NOT commit config.h to version control!
+
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// WiFi Credentials
+#define WIFI_SSID "YOUR_WIFI_SSID"
+#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+
+// OpenAI API Configuration
+// Get your API key from https://platform.openai.com/api-keys
+#define OPENAI_API_KEY "YOUR_OPENAI_API_KEY"
+
+// Firebase Configuration
+#define FIREBASE_HOST "your-project-default-rtdb.firebaseio.com"
+#define FIREBASE_AUTH ""  // Leave empty for test mode
+#define ACCESS_PIN "6005"
+
+// Optional: Custom settings
+#define MAX_TOKENS 80
+#define TEMPERATURE 0.9
+#define POLL_INTERVAL 5000  // Poll Firebase every 5 seconds
+
+#endif

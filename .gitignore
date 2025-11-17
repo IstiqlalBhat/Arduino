@@ -1,0 +1,25 @@
+# Sensitive Configuration Files
+sketch_nov16b/config.h
+
+# Arduino build files
+*.hex
+*.eep
+*.elf
+*.bin
+
+# Vercel
+.vercel/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
