@@ -24,3 +24,13 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Documentation files (keep locally, don't track in git)
+FIREBASE_FIX.md
+FIREBASE_SETUP.md
+NEXT_STEPS.md
+QUICKSTART.md
+SECURITY.md
+ARDUINO_FIX.txt
+aria/README.md
+aria/DEPLOYMENT.md
