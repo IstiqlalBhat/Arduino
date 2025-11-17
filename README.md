@@ -105,18 +105,7 @@ The LED matrix displays different emotions:
 
 **IMPORTANT:** Read [SECURITY.md](SECURITY.md) before using this project.
 
-### Quick Security Checklist
 
-- [ ] Copied `config.h.example` to `config.h`
-- [ ] Added your own credentials to `config.h`
-- [ ] Never commit `config.h` to version control
-- [ ] Set OpenAI API spending limits
-- [ ] Use a guest WiFi network for IoT devices
-- [ ] Rotate API keys regularly
-
-### Exposed Credentials Warning
-
-If you cloned this repo before the security update, the original API key and WiFi password were exposed in the code. Follow the incident response guide in [SECURITY.md](SECURITY.md).
 
 ## Project Structure
 
