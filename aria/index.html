@@ -1,465 +1,160 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-  <meta charset='UTF-8'>
-  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-  <title>Toby - AI Watch Assistant</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOBY // CYBERWATCH_2077</title>
+  <link rel="stylesheet" href="css/style.css">
 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .container {
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      padding: 40px;
-      max-width: 500px;
-      width: 100%;
-      backdrop-filter: blur(10px);
-      animation: fadeIn 0.5s ease;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
+  <!-- Import Maps for Three.js -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
       }
     }
-
-    h1 {
-      color: #333;
-      text-align: center;
-      margin-bottom: 10px;
-      font-size: 32px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: #666;
-      margin-bottom: 30px;
-      font-size: 14px;
-    }
-
-    .input-group {
-      position: relative;
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      color: #555;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    input {
-      width: 100%;
-      padding: 15px 20px;
-      font-size: 16px;
-      border: 2px solid #e0e0e0;
-      border-radius: 12px;
-      outline: none;
-      transition: all 0.3s ease;
-    }
-
-    input:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    input.small {
-      font-size: 14px;
-      padding: 12px 16px;
-    }
-
-    button {
-      width: 100%;
-      padding: 15px;
-      font-size: 18px;
-      font-weight: 600;
-      color: white;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-      margin-top: 10px;
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-    }
-
-    button:active {
-      transform: translateY(0);
-    }
-
-    button:disabled {
-      background: linear-gradient(135deg, #ccc, #999);
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .status {
-      text-align: center;
-      margin-top: 20px;
-      padding: 15px;
-      border-radius: 10px;
-      font-size: 14px;
-      display: none;
-      animation: slideIn 0.3s ease;
-    }
-
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .status.sending {
-      display: block;
-      background: #e3f2fd;
-      color: #1976d2;
-      border-left: 4px solid #1976d2;
-    }
-
-    .status.success {
-      display: block;
-      background: #e8f5e9;
-      color: #388e3c;
-      border-left: 4px solid #388e3c;
-    }
-
-    .status.error {
-      display: block;
-      background: #ffebee;
-      color: #d32f2f;
-      border-left: 4px solid #d32f2f;
-    }
-
-    .info {
-      text-align: center;
-      color: #999;
-      font-size: 12px;
-      margin-top: 20px;
-      padding: 10px;
-      background: rgba(102, 126, 234, 0.1);
-      border-radius: 8px;
-    }
-
-    .emoji {
-      font-size: 64px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    @keyframes bounce {
-      0%, 100% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-10px);
-      }
-    }
-
-    .bounce {
-      animation: bounce 1s infinite;
-    }
-
-    .setup-section {
-      background: rgba(255, 152, 0, 0.1);
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      border-left: 4px solid #ff9800;
-    }
-
-    .setup-section h3 {
-      color: #f57c00;
-      margin-bottom: 10px;
-      font-size: 16px;
-    }
-
-    .authenticated {
-      display: none;
-    }
-
-    .authenticated.active {
-      display: block;
-    }
-
-    .unauthenticated {
-      display: block;
-    }
-
-    .unauthenticated.hidden {
-      display: none;
-    }
-
-    .firebase-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      background: #4caf50;
-      color: white;
-      border-radius: 20px;
-      font-size: 11px;
-      margin-left: 10px;
-      font-weight: bold;
-    }
-
-    .firebase-badge.disconnected {
-      background: #f44336;
-    }
-  </style>
+  </script>
+  
+  <!-- Framer Motion -->
+  <script src="https://unpkg.com/framer-motion@11.0.8/dist/framer-motion.js"></script>
 </head>
+
 <body>
-  <div class='container'>
-    <div class='emoji bounce'>⌚</div>
-    <h1>Toby Watch Assistant</h1>
-    <p class='subtitle'>🌐 Public Cloud Access <span class='firebase-badge' id='firebaseBadge'>Setup Required</span></p>
+  <!-- Atmospheric Rain Layer -->
+  <canvas id="rain-canvas"></canvas>
+  
+  <!-- Scanline Overlay -->
+  <div class="global-scanlines"></div>
+  
+  <!-- Vignette -->
+  <div class="vignette"></div>
+  
+  <!-- Chromatic Aberration Overlay -->
+  <div class="chromatic-layer"></div>
 
-    <!-- Setup Section -->
-    <div class='unauthenticated' id='unauthenticated'>
-      <div class='setup-section'>
-        <h3>🔐 Enter PIN to Connect</h3>
-        <div class='info' style='margin-top: 10px; background: rgba(255, 152, 0, 0.1);'>
-          <strong>PIN Required</strong>
-          <br>Ask Istiqlal for the access PIN to chat with Toby on his watch!
-        </div>
-      </div>
+  <!-- 3D Containers -->
+  <div id="webgl-container"></div>
+  <div id="css3d-container"></div>
 
-      <div class='input-group'>
-        <label>Access PIN</label>
-        <input type='password' id='pin' class='small'
-               placeholder='Enter 4-digit PIN'
-               maxlength='4'
-               value=''>
-      </div>
-
-      <button onclick='authenticate()'>🔓 Connect</button>
-    </div>
-
-    <!-- Chat Section (shown after authentication) -->
-    <div class='authenticated' id='authenticated'>
-      <div class='info' style='margin-bottom: 20px; background: rgba(76, 175, 80, 0.1); color: #2e7d32;'>
-        ✅ Connected! Your message will appear on Istiqlal's watch.
-      </div>
-
-      <div class='input-group'>
-        <label>Ask Toby Anything</label>
-        <input type='text' id='msg' placeholder='Type your message...' disabled>
-      </div>
-
-      <button id='sendBtn' onclick='send()' disabled>💬 Send to Watch</button>
-      <button onclick='disconnect()' style='background: linear-gradient(135deg, #f44336, #d32f2f); margin-top: 10px;'>🔒 Disconnect</button>
-    </div>
-
-    <div class='status' id='status'></div>
-
-    <div class='info'>
-      ⌚ Messages are displayed on Istiqlal's Arduino watch in real-time!
-      <br><small>Powered by AI</small>
+  <!-- HUD Corner Elements -->
+  <div class="hud-corner top-left">
+    <div class="hud-bracket"></div>
+    <div class="hud-text">
+      <span class="blink">●</span> NEURAL_LINK::ACTIVE
+      <br>
+      <span class="dim">LAT: 52.2297° N</span>
+      <br>
+      <span class="dim">LON: 21.0122° E</span>
     </div>
   </div>
 
-  <script>
-    // Hardcoded Firebase URL - users only need PIN
-    const firebaseUrl = 'aria-58e32-default-rtdb.firebaseio.com';
-    let userPin = '';
-    let isAuthenticated = false;
+  <div class="hud-corner top-right">
+    <div class="hud-bracket flip"></div>
+    <div class="hud-text right">
+      <span id="hud-time">00:00:00</span>
+      <br>
+      <span class="dim" id="hud-date">2077.12.05</span>
+      <br>
+      <span class="status-ok">▲ UPLINK OK</span>
+    </div>
+  </div>
 
-    const msgInput = document.getElementById('msg');
-    const sendBtn = document.getElementById('sendBtn');
-    const status = document.getElementById('status');
-    const badge = document.getElementById('firebaseBadge');
+  <div class="hud-corner bottom-left">
+    <div class="hud-bracket flip-v"></div>
+    <div class="hud-stats">
+      <div class="stat-row">
+        <span>CPU</span>
+        <div class="stat-bar"><div class="stat-fill" id="cpu-bar" style="width:45%"></div></div>
+        <span id="cpu-val">45%</span>
+      </div>
+      <div class="stat-row">
+        <span>MEM</span>
+        <div class="stat-bar"><div class="stat-fill" id="mem-bar" style="width:62%"></div></div>
+        <span id="mem-val">62%</span>
+      </div>
+      <div class="stat-row">
+        <span>NET</span>
+        <div class="stat-bar"><div class="stat-fill neon" id="net-bar" style="width:88%"></div></div>
+        <span id="net-val">88%</span>
+      </div>
+    </div>
+  </div>
 
-    // Load saved PIN
-    window.addEventListener('load', () => {
-      const savedPin = localStorage.getItem('userPin');
+  <div class="hud-corner bottom-right">
+    <div class="hud-bracket flip-both"></div>
+    <div class="mini-console" id="mini-log">
+      <div class="log-entry">> SYS_INIT</div>
+    </div>
+  </div>
 
-      if (savedPin) {
-        document.getElementById('pin').value = savedPin;
-        // Auto-authenticate if PIN exists
-        authenticate();
-      }
-    });
+  <!-- Watch Interaction Hints -->
+  <div class="interaction-hints">
+    <div class="hint" id="hint-send">
+      <div class="hint-key">SEND</div>
+      <div class="hint-desc">Transmit encrypted packet</div>
+    </div>
+    <div class="hint" id="hint-disconnect">
+      <div class="hint-key">DISC</div>
+      <div class="hint-desc">Terminate connection</div>
+    </div>
+  </div>
 
-    // Enable Enter key
-    document.getElementById('pin').addEventListener('keypress', e => {
-      if (e.key === 'Enter') authenticate();
-    });
+  <!-- Floating Hex Grid Background -->
+  <div class="hex-background" id="hex-grid"></div>
 
-    msgInput.addEventListener('keypress', e => {
-      if (e.key === 'Enter' && !sendBtn.disabled) send();
-    });
+  <!-- The DOM Element to be embedded in the 3D Watch Screen -->
+  <div id="terminal-source">
+    <div class="crt-container">
+      <div class="crt-glare"></div>
+      <div class="scanline"></div>
+      <div class="noise-overlay"></div>
+      <div class="terminal-header">
+        <div class="header-left">
+          <span class="header-icon">◈</span>
+          <span class="header-title">TOBY_WATCH_OS</span>
+        </div>
+        <div class="header-right">
+          <span class="header-status" id="connection-status">● CONNECTED</span>
+        </div>
+      </div>
+      <div class="terminal-divider"></div>
+      <div id="terminal">
+        <!-- Log output -->
+      </div>
+      <div class="input-area">
+        <div class="input-glow"></div>
+        <span class="prompt" id="prompt-label">BOOTING...</span>
+        <input type="text" id="command-input" autocomplete="off" spellcheck="false" disabled>
+        <div class="cursor-block"></div>
+      </div>
+    </div>
+  </div>
 
-    function authenticate() {
-      const pinInput = document.getElementById('pin').value.trim();
+  <!-- Loading Overlay -->
+  <div id="loading">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">
+        <span class="glitch" data-text="INITIALIZING">INITIALIZING</span>
+      </div>
+      <div class="loading-bar">
+        <div class="loading-progress" id="loading-progress"></div>
+      </div>
+      <div class="loading-status" id="loading-status">Loading neural pathways...</div>
+    </div>
+  </div>
 
-      if (!pinInput) {
-        showStatus('error', '❌ Please enter PIN');
-        return;
-      }
+  <!-- Audio Elements -->
+  <audio id="sfx-keystroke" preload="auto"></audio>
+  <audio id="sfx-success" preload="auto"></audio>
+  <audio id="sfx-error" preload="auto"></audio>
+  <audio id="sfx-click" preload="auto"></audio>
 
-      if (pinInput.length !== 4) {
-        showStatus('error', '❌ PIN must be 4 digits');
-        return;
-      }
-
-      // Verify PIN matches
-      if (pinInput !== '6005') {
-        showStatus('error', '❌ Incorrect PIN');
-        // Clear wrong PIN from input
-        document.getElementById('pin').value = '';
-        return;
-      }
-
-      userPin = pinInput;
-
-      // Save PIN only
-      localStorage.setItem('userPin', userPin);
-
-      // Test connection
-      testFirebaseConnection();
-    }
-
-    async function testFirebaseConnection() {
-      showStatus('sending', '🔍 Testing Firebase connection...');
-
-      try {
-        const response = await fetch(`https://${firebaseUrl}/.json`);
-
-        if (!response.ok) {
-          throw new Error('Connection failed');
-        }
-
-        // Success
-        isAuthenticated = true;
-        document.getElementById('unauthenticated').classList.add('hidden');
-        document.getElementById('authenticated').classList.add('active');
-        msgInput.disabled = false;
-        sendBtn.disabled = false;
-        badge.textContent = 'Connected';
-        badge.classList.remove('disconnected');
-
-        showStatus('success', '✅ Connected to Firebase!<br><small>Ready to send messages</small>');
-
-        setTimeout(() => {
-          status.style.display = 'none';
-        }, 3000);
-      } catch (error) {
-        showStatus('error', '❌ Cannot connect to Firebase<br><small>Check your connection and try again</small>');
-        badge.textContent = 'Disconnected';
-        badge.classList.add('disconnected');
-      }
-    }
-
-    function disconnect() {
-      isAuthenticated = false;
-      document.getElementById('unauthenticated').classList.remove('hidden');
-      document.getElementById('authenticated').classList.remove('active');
-      msgInput.disabled = true;
-      sendBtn.disabled = true;
-      badge.textContent = 'Setup Required';
-      badge.classList.add('disconnected');
-
-      showStatus('success', '🔒 Disconnected');
-      setTimeout(() => {
-        status.style.display = 'none';
-      }, 2000);
-    }
-
-    async function send() {
-      const msg = msgInput.value.trim();
-
-      if (!msg) {
-        return;
-      }
-
-      if (!isAuthenticated) {
-        showStatus('error', '❌ Please authenticate first');
-        return;
-      }
-
-      sendBtn.disabled = true;
-      sendBtn.innerHTML = '⏳ Sending...';
-      showStatus('sending', '🚀 Sending to Istiqlal\'s watch...<br><small>Please wait...</small>');
-
-      try {
-        // Create message object
-        const message = {
-          text: msg,
-          timestamp: Date.now(),
-          processed: false,
-          pin: userPin
-        };
-
-        // Send to Firebase
-        const response = await fetch(`https://${firebaseUrl}/messages.json`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(message)
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to send message');
-        }
-
-        const data = await response.json();
-        console.log('Message sent:', data);
-
-        sendBtn.disabled = false;
-        sendBtn.innerHTML = '💬 Send to Watch';
-        showStatus('success', '✅ Message sent successfully!<br><small>Istiqlal will see it on his watch</small>');
-        msgInput.value = '';
-
-        setTimeout(() => {
-          status.style.display = 'none';
-        }, 4000);
-      } catch (error) {
-        sendBtn.disabled = false;
-        sendBtn.innerHTML = '💬 Send to Watch';
-        showStatus('error', '❌ Failed to send message<br><small>' + error.message + '</small>');
-        console.error('Error:', error);
-      }
-    }
-
-    function showStatus(type, message) {
-      status.className = `status ${type}`;
-      status.innerHTML = message;
-    }
-  </script>
+  <!-- Scripts -->
+  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/scene.js"></script>
 </body>
+
 </html>
