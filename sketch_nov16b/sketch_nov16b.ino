@@ -518,14 +518,22 @@ String askGPT(String question) {
 
   if (!client.connect("api.openai.com", 443)) {
     client.stop();
-    return "Connection failed. Check your WiFi!";
+    return "Offline. Check WiFi signal.";
   }
 
   // Escape quotes
   question.replace("\"", "\\\"");
 
-  // Personality system message
-String systemMsg = "You are Toby, a brilliant AI assistant on Istiqlal's wrist. Answer ANY question directly and helpfully.";
+  // Personality system message - optimized for wrist display utility
+  String systemMsg = "You are Toby, a brilliant AI assistant on Istiqlal's wrist. Rules: "
+    "1) MAX 2-3 sentences - tiny screen! "
+    "2) Math/conversions: show answer + formula. "
+    "3) Tasks: numbered steps. "
+    "4) Decisions: give ONE clear recommendation. "
+    "5) Facts: most useful info first. "
+    "6) Code: shortest working snippet. "
+    "7) Health: actionable tip. "
+    "You're friendly, smart, and witty. No fluff - every word earns its pixel.";
   // Build JSON with personality
   String json = "{\"model\":\"gpt-4o-mini\",\"messages\":[";
   json += "{\"role\":\"system\",\"content\":\"" + systemMsg + "\"},";
@@ -548,7 +556,7 @@ String systemMsg = "You are Toby, a brilliant AI assistant on Istiqlal's wrist. 
   while (!client.available()) {
     if (millis() - timeout > 15000) {
       client.stop();
-      return "Timeout! Please try again.";
+      return "Timeout. Try again.";
     }
   }
 
@@ -582,7 +590,7 @@ String systemMsg = "You are Toby, a brilliant AI assistant on Istiqlal's wrist. 
   if (answer) {
     return String(answer);
   } else {
-    return "Oops! Something went wrong. Try again?";
+    return "Error. Retry your question.";
   }
 }
 

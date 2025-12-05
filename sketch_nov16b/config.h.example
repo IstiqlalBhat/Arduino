@@ -19,8 +19,8 @@
 #define ACCESS_PIN "6005"
 
 // Optional: Custom settings
-#define MAX_TOKENS 80
-#define TEMPERATURE 0.9
+#define MAX_TOKENS 100      // Enough for structured answers
+#define TEMPERATURE 0.7     // Balanced: accurate but not robotic
 #define POLL_INTERVAL 5000  // Poll Firebase every 5 seconds
 
 #endif
