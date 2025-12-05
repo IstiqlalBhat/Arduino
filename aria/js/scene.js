@@ -164,9 +164,9 @@ const terminalDiv = document.getElementById('terminal-source');
 terminalDiv.style.visibility = 'visible';
 
 const cssObject = new CSS3DObject(terminalDiv);
-// Scale to fit watch screen (3.4 units wide, terminal is 300px)
-cssObject.scale.set(0.0113, 0.0113, 0.0113);
-cssObject.position.set(0, 0, 0.55);
+// Scale to fit watch screen - larger for better visibility
+cssObject.scale.set(0.014, 0.014, 0.014);
+cssObject.position.set(0, 0, 0.54);
 watchGroup.add(cssObject);
 
 updateLoadingProgress('Connecting systems...', 80);

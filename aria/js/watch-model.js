@@ -38,30 +38,32 @@ export class CyberWatch {
                 emissiveIntensity: 1.2,
                 roughness: 0.2
             }),
+            // SEND button - Bright Cherry Red
             redButton: new THREE.MeshStandardMaterial({
-                color: 0xdd1133,
-                emissive: 0xaa0022,
-                emissiveIntensity: 0.8,
-                roughness: 0.2,
-                metalness: 0.3
+                color: 0xff2040,
+                emissive: 0xff1030,
+                emissiveIntensity: 1.5,
+                roughness: 0.15,
+                metalness: 0.2
             }),
             redButtonActive: new THREE.MeshStandardMaterial({
-                color: 0xff2244,
-                emissive: 0xff0033,
-                emissiveIntensity: 2.0,
+                color: 0xff4060,
+                emissive: 0xff2050,
+                emissiveIntensity: 3.0,
                 roughness: 0.1
             }),
+            // DISCONNECT button - Bright Gold/Amber
             orangeButton: new THREE.MeshStandardMaterial({
-                color: 0xdd7700,
-                emissive: 0xaa5500,
-                emissiveIntensity: 0.7,
-                roughness: 0.2,
-                metalness: 0.3
+                color: 0xffaa00,
+                emissive: 0xdd8800,
+                emissiveIntensity: 1.2,
+                roughness: 0.15,
+                metalness: 0.2
             }),
             orangeButtonActive: new THREE.MeshStandardMaterial({
-                color: 0xff9922,
-                emissive: 0xff7700,
-                emissiveIntensity: 2.0,
+                color: 0xffcc33,
+                emissive: 0xffaa00,
+                emissiveIntensity: 3.0,
                 roughness: 0.1
             }),
             leather: new THREE.MeshStandardMaterial({
