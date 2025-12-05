@@ -18,14 +18,16 @@ export async function checkConnection() {
  * Sends a message to the Firebase DB.
  * @param {string} text - Message content
  * @param {string} sessionToken - Session token for auth/logging
+ * @param {string} pin - Access PIN for Arduino verification
  * @returns {Promise<any>}
  */
-export async function sendMessage(text, sessionToken) {
+export async function sendMessage(text, sessionToken, pin) {
     const message = {
         text: text,
         timestamp: Date.now(),
         processed: false,
-        sessionToken: sessionToken
+        sessionToken: sessionToken,
+        pin: pin  // Arduino checks this field
     };
 
     const response = await fetch(`https://${FIREBASE_URL}/messages.json`, {

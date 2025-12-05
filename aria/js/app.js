@@ -15,6 +15,7 @@ const connectionStatus = document.getElementById('connection-status');
 
 let state = 'BOOT'; // BOOT, AUTH, CHAT
 let sessionToken = '';
+let accessPin = '';  // Store PIN for Arduino verification
 
 // ========================================
 // API ENDPOINTS
@@ -148,10 +149,12 @@ async function startBootSequence() {
     await typeText('', '');
     await typeText('[SYS] All subsystems operational.', 'success');
     
-    // Check for saved session token
+    // Check for saved session
     const savedToken = localStorage.getItem('sessionToken');
-    if (savedToken) {
+    const savedPin = localStorage.getItem('accessPin');
+    if (savedToken && savedPin) {
         sessionToken = savedToken;
+        accessPin = savedPin;
         state = 'CHAT';
         await wait(300);
         await typeTextGlitch('◆ BIOMETRIC CACHE VALID', 'success');
@@ -211,7 +214,9 @@ async function processAuth(pin) {
             await typeText('Identity confirmed. Neural link synchronized.', 'success');
             
             sessionToken = result.token;
+            accessPin = pin;  // Store PIN for Arduino
             localStorage.setItem('sessionToken', sessionToken);
+            localStorage.setItem('accessPin', accessPin);
             state = 'CHAT';
             
             if (window.addMiniLog) window.addMiniLog('AUTH: verified', 'success');
@@ -262,7 +267,9 @@ async function processChat(msg) {
     if (cmd === '/logout') {
         state = 'AUTH';
         sessionToken = '';
+        accessPin = '';
         localStorage.removeItem('sessionToken');
+        localStorage.removeItem('accessPin');
         await typeTextGlitch('◆ SESSION TERMINATED', 'warning');
         await typeText('Neural link disconnected.', 'system');
         updatePrompt();
@@ -293,7 +300,7 @@ async function processChat(msg) {
     await typeText('[TX] Transmitting to ARIA...', 'info');
     
     try {
-        const response = await sendMessage(msg, sessionToken);
+        const response = await sendMessage(msg, sessionToken, accessPin);
         const refId = response.name ? response.name.substring(0, 12) : 'unknown';
         
         playSuccess();
