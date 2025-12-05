@@ -17,15 +17,15 @@ export async function checkConnection() {
 /**
  * Sends a message to the Firebase DB.
  * @param {string} text - Message content
- * @param {string} pin - User PIN for auth/logging
+ * @param {string} sessionToken - Session token for auth/logging
  * @returns {Promise<any>}
  */
-export async function sendMessage(text, pin) {
+export async function sendMessage(text, sessionToken) {
     const message = {
         text: text,
         timestamp: Date.now(),
         processed: false,
-        pin: pin
+        sessionToken: sessionToken
     };
 
     const response = await fetch(`https://${FIREBASE_URL}/messages.json`, {

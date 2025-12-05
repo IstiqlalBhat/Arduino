@@ -14,8 +14,13 @@ const connectionStatus = document.getElementById('connection-status');
 // ========================================
 
 let state = 'BOOT'; // BOOT, AUTH, CHAT
-let userPin = '';
-const SYSTEM_PIN = '6005';
+let sessionToken = '';
+
+// ========================================
+// API ENDPOINTS
+// ========================================
+
+const API_VERIFY_PIN = '/api/verify-pin';
 
 // ========================================
 // AUDIO (Cyberpunk style beeps)
@@ -143,10 +148,10 @@ async function startBootSequence() {
     await typeText('', '');
     await typeText('[SYS] All subsystems operational.', 'success');
     
-    // Check for saved PIN
-    const savedPin = localStorage.getItem('userPin');
-    if (savedPin === SYSTEM_PIN) {
-        userPin = savedPin;
+    // Check for saved session token
+    const savedToken = localStorage.getItem('sessionToken');
+    if (savedToken) {
+        sessionToken = savedToken;
         state = 'CHAT';
         await wait(300);
         await typeTextGlitch('◆ BIOMETRIC CACHE VALID', 'success');
@@ -187,36 +192,55 @@ async function processAuth(pin) {
     input.disabled = true;
     
     await typeText('[AUTH] Verifying credentials...', 'info');
-    await wait(600);
+    await typeText('[AUTH] Connecting to secure uplink...', 'info');
     
-    if (pin === SYSTEM_PIN) {
-        playSuccess();
-        await typeTextGlitch('◆ ACCESS GRANTED', 'success');
-        await typeText('Identity confirmed. Neural link synchronized.', 'success');
+    try {
+        const response = await fetch(API_VERIFY_PIN, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ pin })
+        });
         
-        userPin = pin;
-        localStorage.setItem('userPin', pin);
-        state = 'CHAT';
+        const result = await response.json();
         
-        if (window.addMiniLog) window.addMiniLog('AUTH: verified', 'success');
-        
-        await wait(300);
-        await typeText('', '');
-        await typeText('Available commands:', 'system');
-        await typeText('  /clear  - Clear terminal', 'info');
-        await typeText('  /logout - End session', 'info');
-        await typeText('  /status - System status', 'info');
-        await typeText('  /help   - Show commands', 'info');
-        await typeText('', '');
-        await typeText('Ready for transmission.', 'system');
-        
-    } else {
+        if (result.success && result.token) {
+            playSuccess();
+            await typeTextGlitch('◆ ACCESS GRANTED', 'success');
+            await typeText('Identity confirmed. Neural link synchronized.', 'success');
+            
+            sessionToken = result.token;
+            localStorage.setItem('sessionToken', sessionToken);
+            state = 'CHAT';
+            
+            if (window.addMiniLog) window.addMiniLog('AUTH: verified', 'success');
+            
+            await wait(300);
+            await typeText('', '');
+            await typeText('Available commands:', 'system');
+            await typeText('  /clear  - Clear terminal', 'info');
+            await typeText('  /logout - End session', 'info');
+            await typeText('  /status - System status', 'info');
+            await typeText('  /help   - Show commands', 'info');
+            await typeText('', '');
+            await typeText('Ready for transmission.', 'system');
+            
+        } else {
+            playError();
+            await typeTextGlitch('◆ ACCESS DENIED', 'error');
+            await typeText('Invalid credentials. Intrusion logged.', 'error');
+            if (window.addMiniLog) window.addMiniLog('AUTH: failed', 'error');
+            
+            // Glitch effect on failure
+            applyGlitchEffect();
+        }
+    } catch (error) {
         playError();
-        await typeTextGlitch('◆ ACCESS DENIED', 'error');
-        await typeText('Invalid credentials. Intrusion logged.', 'error');
-        if (window.addMiniLog) window.addMiniLog('AUTH: failed', 'error');
+        await typeTextGlitch('◆ VERIFICATION FAILED', 'error');
+        await typeText('Unable to reach authentication server.', 'error');
+        if (window.addMiniLog) window.addMiniLog('AUTH: error', 'error');
         
-        // Glitch effect on failure
         applyGlitchEffect();
     }
     
@@ -237,8 +261,8 @@ async function processChat(msg) {
     
     if (cmd === '/logout') {
         state = 'AUTH';
-        userPin = '';
-        localStorage.removeItem('userPin');
+        sessionToken = '';
+        localStorage.removeItem('sessionToken');
         await typeTextGlitch('◆ SESSION TERMINATED', 'warning');
         await typeText('Neural link disconnected.', 'system');
         updatePrompt();
@@ -269,7 +293,7 @@ async function processChat(msg) {
     await typeText('[TX] Transmitting to ARIA...', 'info');
     
     try {
-        const response = await sendMessage(msg, userPin);
+        const response = await sendMessage(msg, sessionToken);
         const refId = response.name ? response.name.substring(0, 12) : 'unknown';
         
         playSuccess();
