@@ -4,6 +4,7 @@ export class CyberWatch {
     constructor() {
         this.mesh = new THREE.Group();
         this.interactiveElements = {};
+        this.clickableMeshes = []; // Array of all clickable meshes for raycasting
         this.buttonStates = {
             send: { pressed: false, hover: false },
             disconnect: { pressed: false, hover: false },
@@ -54,36 +55,36 @@ export class CyberWatch {
                 metalness: 0.0
             }),
 
-            // Red SEND button
+            // Red SEND button - brighter
             redButton: new THREE.MeshStandardMaterial({
-                color: 0xcc0022,
-                emissive: 0x660011,
-                emissiveIntensity: 0.8,
+                color: 0xff0033,
+                emissive: 0xff0022,
+                emissiveIntensity: 1.2,
                 roughness: 0.15,
                 metalness: 0.3
             }),
 
             redButtonPressed: new THREE.MeshStandardMaterial({
-                color: 0xff0033,
-                emissive: 0xff0033,
-                emissiveIntensity: 2.0,
+                color: 0xff3355,
+                emissive: 0xff0044,
+                emissiveIntensity: 3.0,
                 roughness: 0.1,
                 metalness: 0.2
             }),
 
-            // Orange DISCONNECT button
+            // Orange DISCONNECT button - brighter
             orangeButton: new THREE.MeshStandardMaterial({
-                color: 0xcc6600,
-                emissive: 0x663300,
-                emissiveIntensity: 0.6,
+                color: 0xff8800,
+                emissive: 0xff6600,
+                emissiveIntensity: 1.0,
                 roughness: 0.15,
                 metalness: 0.3
             }),
 
             orangeButtonPressed: new THREE.MeshStandardMaterial({
-                color: 0xff8800,
+                color: 0xffaa33,
                 emissive: 0xff8800,
-                emissiveIntensity: 2.0,
+                emissiveIntensity: 3.0,
                 roughness: 0.1,
                 metalness: 0.2
             }),
@@ -143,7 +144,7 @@ export class CyberWatch {
 
         this.buildMainCase();
         this.buildScreen();
-        this.buildButtons();
+        this.buildSideButtons(); // Renamed to be clearer
         this.buildCrown();
         this.buildCircuitry();
         this.buildWires();
@@ -196,15 +197,11 @@ export class CyberWatch {
             this.mesh.add(plate);
         });
 
-        // Side rails
+        // Left side rail only (buttons on right)
         const railGeo = new THREE.BoxGeometry(0.15, 4.0, 0.6);
         const leftRail = new THREE.Mesh(railGeo, this.materials.brushedSteel);
         leftRail.position.set(-2.35, 0, 0);
         this.mesh.add(leftRail);
-
-        const rightRail = new THREE.Mesh(railGeo, this.materials.brushedSteel);
-        rightRail.position.set(2.7, 0, 0);
-        this.mesh.add(rightRail);
 
         // Top and bottom rails
         const hRailGeo = new THREE.BoxGeometry(3.8, 0.15, 0.6);
@@ -258,97 +255,127 @@ export class CyberWatch {
         });
     }
 
-    buildButtons() {
-        // === SEND BUTTON (Large Red) ===
+    buildSideButtons() {
+        // ===============================================
+        // SEND BUTTON (Large Red) - Positioned on RIGHT SIDE, sticking OUT
+        // ===============================================
         const sendButtonGroup = new THREE.Group();
+        sendButtonGroup.name = 'sendButtonGroup';
         
-        // Button housing
-        const housingGeo = new THREE.BoxGeometry(0.5, 1.8, 0.6);
+        // Button housing - horizontal, sticking out from the side
+        const housingGeo = new THREE.BoxGeometry(1.2, 1.8, 0.7); // Width sticks out
         const housing = new THREE.Mesh(housingGeo, this.materials.darkMetal);
+        housing.castShadow = true;
         sendButtonGroup.add(housing);
 
-        // Button face
-        const buttonGeo = new THREE.BoxGeometry(0.4, 1.5, 0.35);
+        // Button face - the clickable part
+        const buttonGeo = new THREE.BoxGeometry(0.6, 1.4, 0.6);
         const sendButton = new THREE.Mesh(buttonGeo, this.materials.redButton);
-        sendButton.position.z = 0.15;
+        sendButton.position.set(0.35, 0, 0.08); // Sticking out front
         sendButton.name = 'sendButton';
+        sendButton.userData.isButton = true;
+        sendButton.userData.buttonType = 'send';
         sendButtonGroup.add(sendButton);
+        this.clickableMeshes.push(sendButton);
 
-        // Button glow strip
-        const glowStripGeo = new THREE.BoxGeometry(0.35, 0.08, 0.1);
+        // SEND text label glow strips
+        const glowStripGeo = new THREE.BoxGeometry(0.08, 1.2, 0.08);
         const glowStrip1 = new THREE.Mesh(glowStripGeo, this.materials.neonEdgeCyan);
-        glowStrip1.position.set(0, 0.6, 0.28);
+        glowStrip1.position.set(0.68, 0, 0.08);
         sendButtonGroup.add(glowStrip1);
 
-        const glowStrip2 = new THREE.Mesh(glowStripGeo, this.materials.neonEdgeCyan);
-        glowStrip2.position.set(0, -0.6, 0.28);
-        sendButtonGroup.add(glowStrip2);
+        // Horizontal accent bars
+        const hBarGeo = new THREE.BoxGeometry(0.5, 0.06, 0.1);
+        for (let i = 0; i < 3; i++) {
+            const bar = new THREE.Mesh(hBarGeo, this.materials.neonEdgeCyan);
+            bar.position.set(0.35, -0.5 + i * 0.5, 0.38);
+            sendButtonGroup.add(bar);
+        }
 
-        sendButtonGroup.position.set(2.6, 0.6, 0);
+        // Position the entire group on the RIGHT SIDE of watch
+        sendButtonGroup.position.set(3.0, 0.5, 0); // X = far right side
+        sendButtonGroup.rotation.y = 0; // Facing outward
         this.mesh.add(sendButtonGroup);
         this.interactiveElements.sendButton = sendButtonGroup;
 
-        // === DISCONNECT BUTTON (Orange) ===
+        // ===============================================
+        // DISCONNECT BUTTON (Orange) - Below SEND
+        // ===============================================
         const disconnectGroup = new THREE.Group();
+        disconnectGroup.name = 'disconnectButtonGroup';
 
-        const discHousingGeo = new THREE.BoxGeometry(0.45, 1.2, 0.5);
+        const discHousingGeo = new THREE.BoxGeometry(1.0, 1.2, 0.6);
         const discHousing = new THREE.Mesh(discHousingGeo, this.materials.darkMetal);
+        discHousing.castShadow = true;
         disconnectGroup.add(discHousing);
 
-        const discButtonGeo = new THREE.BoxGeometry(0.35, 0.9, 0.3);
+        const discButtonGeo = new THREE.BoxGeometry(0.5, 0.9, 0.5);
         const discButton = new THREE.Mesh(discButtonGeo, this.materials.orangeButton);
-        discButton.position.z = 0.12;
+        discButton.position.set(0.28, 0, 0.08);
         discButton.name = 'disconnectButton';
+        discButton.userData.isButton = true;
+        discButton.userData.buttonType = 'disconnect';
         disconnectGroup.add(discButton);
+        this.clickableMeshes.push(discButton);
 
-        // Accent lines
-        const accentLineGeo = new THREE.BoxGeometry(0.3, 0.04, 0.08);
+        // Accent lines on disconnect button
+        const accentLineGeo = new THREE.BoxGeometry(0.4, 0.05, 0.08);
         for (let i = 0; i < 3; i++) {
             const line = new THREE.Mesh(accentLineGeo, this.materials.neonEdgeMagenta);
-            line.position.set(0, -0.3 + i * 0.3, 0.22);
+            line.position.set(0.28, -0.3 + i * 0.3, 0.35);
             disconnectGroup.add(line);
         }
 
-        disconnectGroup.position.set(2.55, -1.4, 0);
+        // Vertical glow strip
+        const vGlowGeo = new THREE.BoxGeometry(0.06, 0.8, 0.08);
+        const vGlow = new THREE.Mesh(vGlowGeo, this.materials.neonEdgeMagenta);
+        vGlow.position.set(0.55, 0, 0.08);
+        disconnectGroup.add(vGlow);
+
+        disconnectGroup.position.set(2.9, -1.5, 0);
         this.mesh.add(disconnectGroup);
         this.interactiveElements.disconnectButton = disconnectGroup;
     }
 
     buildCrown() {
-        // Crown/dial group
+        // Crown/dial group - positioned at top right
         const crownGroup = new THREE.Group();
+        crownGroup.name = 'crownGroup';
 
-        // Crown base
-        const baseGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.15, 24);
+        // Crown base cylinder
+        const baseGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.2, 24);
         const base = new THREE.Mesh(baseGeo, this.materials.darkMetal);
         base.rotation.z = Math.PI / 2;
         crownGroup.add(base);
 
-        // Crown knob with ridges
-        const knobGeo = new THREE.CylinderGeometry(0.28, 0.3, 0.5, 16);
+        // Crown knob with ridges - the actual dial
+        const knobGeo = new THREE.CylinderGeometry(0.35, 0.38, 0.7, 20);
         const knob = new THREE.Mesh(knobGeo, this.materials.brushedSteel);
         knob.rotation.z = Math.PI / 2;
-        knob.position.x = 0.25;
+        knob.position.x = 0.4;
         knob.name = 'crown';
+        knob.userData.isButton = true;
+        knob.userData.buttonType = 'crown';
         crownGroup.add(knob);
+        this.clickableMeshes.push(knob);
 
-        // Ridge details
-        for (let i = 0; i < 12; i++) {
-            const ridgeGeo = new THREE.BoxGeometry(0.48, 0.02, 0.04);
+        // Ridge details on the crown
+        for (let i = 0; i < 16; i++) {
+            const ridgeGeo = new THREE.BoxGeometry(0.65, 0.015, 0.03);
             const ridge = new THREE.Mesh(ridgeGeo, this.materials.titanium);
-            const angle = (i / 12) * Math.PI * 2;
-            ridge.position.set(0.25, Math.sin(angle) * 0.29, Math.cos(angle) * 0.29);
+            const angle = (i / 16) * Math.PI * 2;
+            ridge.position.set(0.4, Math.sin(angle) * 0.36, Math.cos(angle) * 0.36);
             ridge.rotation.x = angle;
             crownGroup.add(ridge);
         }
 
-        // Crown indicator light
-        const indicatorGeo = new THREE.SphereGeometry(0.06, 8, 8);
+        // Crown indicator light (glowing dot)
+        const indicatorGeo = new THREE.SphereGeometry(0.08, 12, 12);
         const indicator = new THREE.Mesh(indicatorGeo, this.materials.neonEdgeCyan);
-        indicator.position.set(0.52, 0, 0);
+        indicator.position.set(0.78, 0, 0);
         crownGroup.add(indicator);
 
-        crownGroup.position.set(2.5, 2.0, 0);
+        crownGroup.position.set(2.8, 2.2, 0);
         this.mesh.add(crownGroup);
         this.interactiveElements.crown = crownGroup;
     }
@@ -393,7 +420,7 @@ export class CyberWatch {
         // Create exposed wiring on the left side
         const createWire = (points, material) => {
             const curve = new THREE.CatmullRomCurve3(points);
-            const wireGeo = new THREE.TubeGeometry(curve, 20, 0.035, 8, false);
+            const wireGeo = new THREE.TubeGeometry(curve, 20, 0.04, 8, false);
             const wire = new THREE.Mesh(wireGeo, material);
             wire.castShadow = true;
             this.mesh.add(wire);
@@ -402,33 +429,33 @@ export class CyberWatch {
         // Yellow wire
         createWire([
             new THREE.Vector3(-2.2, -1.8, 0.1),
-            new THREE.Vector3(-2.5, -1.0, 0.3),
-            new THREE.Vector3(-2.4, 0, 0.25),
-            new THREE.Vector3(-2.5, 0.8, 0.35),
+            new THREE.Vector3(-2.6, -1.0, 0.3),
+            new THREE.Vector3(-2.5, 0, 0.25),
+            new THREE.Vector3(-2.6, 0.8, 0.35),
             new THREE.Vector3(-2.2, 1.6, 0.15)
         ], this.materials.wireYellow);
 
         // Red wire
         createWire([
             new THREE.Vector3(-2.15, -1.5, 0.15),
-            new THREE.Vector3(-2.55, -0.5, 0.2),
-            new THREE.Vector3(-2.3, 0.5, 0.3),
-            new THREE.Vector3(-2.5, 1.2, 0.25)
+            new THREE.Vector3(-2.7, -0.5, 0.2),
+            new THREE.Vector3(-2.4, 0.5, 0.3),
+            new THREE.Vector3(-2.6, 1.2, 0.25)
         ], this.materials.wireRed);
 
         // Cyan wire
         createWire([
             new THREE.Vector3(-2.3, -2.0, 0.05),
-            new THREE.Vector3(-2.6, -1.2, 0.15),
-            new THREE.Vector3(-2.45, -0.2, 0.2),
-            new THREE.Vector3(-2.55, 0.6, 0.25),
+            new THREE.Vector3(-2.75, -1.2, 0.15),
+            new THREE.Vector3(-2.55, -0.2, 0.2),
+            new THREE.Vector3(-2.7, 0.6, 0.25),
             new THREE.Vector3(-2.3, 1.4, 0.1)
         ], this.materials.wireCyan);
     }
 
     buildNeonAccents() {
         // Top neon strip
-        const stripGeo = new THREE.BoxGeometry(3.2, 0.06, 0.06);
+        const stripGeo = new THREE.BoxGeometry(3.2, 0.08, 0.08);
         const topStrip = new THREE.Mesh(stripGeo, this.materials.neonEdgeCyan);
         topStrip.position.set(0, 2.45, 0.4);
         this.mesh.add(topStrip);
@@ -439,7 +466,7 @@ export class CyberWatch {
         this.mesh.add(bottomStrip);
 
         // Side accent dots
-        const dotGeo = new THREE.SphereGeometry(0.05, 8, 8);
+        const dotGeo = new THREE.SphereGeometry(0.06, 8, 8);
         for (let i = 0; i < 5; i++) {
             const dot = new THREE.Mesh(dotGeo, this.materials.neonEdgeCyan);
             dot.position.set(-2.25, -1.5 + i * 0.7, 0.4);
@@ -447,7 +474,7 @@ export class CyberWatch {
         }
 
         // Animated pulse ring (will be animated in scene.js)
-        const pulseRingGeo = new THREE.RingGeometry(2.2, 2.25, 32);
+        const pulseRingGeo = new THREE.RingGeometry(2.2, 2.28, 32);
         this.pulseRing = new THREE.Mesh(pulseRingGeo, new THREE.MeshBasicMaterial({
             color: 0x00f0ff,
             transparent: true,
@@ -548,16 +575,13 @@ export class CyberWatch {
         const button = this.interactiveElements[buttonName];
         if (!button) return;
 
-        const state = this.buttonStates[buttonName.replace('Button', '').toLowerCase()];
-        if (state) state.pressed = true;
-
-        // Animate button press
+        // Animate button press - move inward
         button.traverse(child => {
-            if (child.name && child.name.includes('Button')) {
-                child.position.z -= 0.1;
-                if (buttonName === 'sendButton') {
+            if (child.userData && child.userData.isButton) {
+                child.position.x -= 0.15; // Push in
+                if (child.userData.buttonType === 'send') {
                     child.material = this.materials.redButtonPressed;
-                } else if (buttonName === 'disconnectButton') {
+                } else if (child.userData.buttonType === 'disconnect') {
                     child.material = this.materials.orangeButtonPressed;
                 }
             }
@@ -571,15 +595,12 @@ export class CyberWatch {
         const button = this.interactiveElements[buttonName];
         if (!button) return;
 
-        const state = this.buttonStates[buttonName.replace('Button', '').toLowerCase()];
-        if (state) state.pressed = false;
-
         button.traverse(child => {
-            if (child.name && child.name.includes('Button')) {
-                child.position.z += 0.1;
-                if (buttonName === 'sendButton') {
+            if (child.userData && child.userData.isButton) {
+                child.position.x += 0.15; // Pop back out
+                if (child.userData.buttonType === 'send') {
                     child.material = this.materials.redButton;
-                } else if (buttonName === 'disconnectButton') {
+                } else if (child.userData.buttonType === 'disconnect') {
                     child.material = this.materials.orangeButton;
                 }
             }
@@ -590,11 +611,14 @@ export class CyberWatch {
         const button = this.interactiveElements[buttonName];
         if (!button) return;
 
-        const intensity = isHovering ? 1.5 : 1.0;
+        const scale = isHovering ? 1.05 : 1.0;
         
         button.traverse(child => {
-            if (child.material && child.material.emissive) {
-                child.material.emissiveIntensity = intensity * (child.material.emissiveIntensity / 1.0);
+            if (child.userData && child.userData.isButton) {
+                child.scale.setScalar(scale);
+                if (child.material && child.material.emissive) {
+                    child.material.emissiveIntensity = isHovering ? 2.0 : 1.0;
+                }
             }
         });
     }
@@ -609,6 +633,10 @@ export class CyberWatch {
 
     getMesh() {
         return this.mesh;
+    }
+
+    getClickableMeshes() {
+        return this.clickableMeshes;
     }
 
     getInteractiveElements() {

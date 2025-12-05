@@ -365,13 +365,13 @@ body:hover .interaction-hints {
    ============================================ */
 
 #terminal-source {
-  width: 380px;
-  height: 380px;
+  width: 320px;
+  height: 320px;
   background: linear-gradient(180deg, 
     rgba(0, 20, 30, 0.95) 0%, 
     rgba(0, 10, 15, 0.98) 100%
   );
-  border-radius: 8px;
+  border-radius: 4px;
   overflow: hidden;
   position: relative;
 }
@@ -382,13 +382,13 @@ body:hover .interaction-hints {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  padding: 10px;
   box-sizing: border-box;
-  border: 1px solid rgba(0, 240, 255, 0.4);
+  border: 2px solid rgba(0, 240, 255, 0.6);
   box-shadow: 
-    inset 0 0 60px rgba(0, 240, 255, 0.05),
-    inset 0 0 20px rgba(0, 240, 255, 0.1),
-    0 0 30px rgba(0, 240, 255, 0.2);
+    inset 0 0 40px rgba(0, 240, 255, 0.08),
+    inset 0 0 15px rgba(0, 240, 255, 0.15),
+    0 0 25px rgba(0, 240, 255, 0.3);
 }
 
 .crt-glare {
@@ -461,9 +461,9 @@ body:hover .interaction-hints {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 8px;
+  padding-bottom: 4px;
   border-bottom: 1px solid rgba(0, 240, 255, 0.3);
-  margin-bottom: 8px;
+  margin-bottom: 5px;
 }
 
 .header-left {
@@ -473,29 +473,29 @@ body:hover .interaction-hints {
 }
 
 .header-icon {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--neon-cyan);
-  text-shadow: 0 0 10px var(--neon-cyan);
+  text-shadow: 0 0 8px var(--neon-cyan);
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
 @keyframes pulse-glow {
-  0%, 100% { opacity: 1; text-shadow: 0 0 10px var(--neon-cyan); }
-  50% { opacity: 0.7; text-shadow: 0 0 20px var(--neon-cyan), 0 0 40px var(--neon-cyan); }
+  0%, 100% { opacity: 1; text-shadow: 0 0 8px var(--neon-cyan); }
+  50% { opacity: 0.7; text-shadow: 0 0 15px var(--neon-cyan), 0 0 30px var(--neon-cyan); }
 }
 
 .header-title {
   font-family: var(--font-display);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   color: var(--neon-cyan);
   text-shadow: 0 0 5px var(--neon-cyan);
 }
 
 .header-status {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 8px;
   color: var(--neon-green);
   text-shadow: 0 0 5px var(--neon-green);
   animation: blink 2s infinite;
@@ -517,7 +517,7 @@ body:hover .interaction-hints {
     transparent 100%
   );
   opacity: 0.5;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 /* Terminal Content */
@@ -525,10 +525,10 @@ body:hover .interaction-hints {
   flex: 1;
   overflow-y: auto;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.5;
   scrollbar-width: none;
-  padding-right: 5px;
+  padding-right: 3px;
 }
 
 #terminal::-webkit-scrollbar {
@@ -539,10 +539,11 @@ body:hover .interaction-hints {
   margin-bottom: 5px;
   word-wrap: break-word;
   position: relative;
-  padding-left: 12px;
+  padding-left: 14px;
   color: var(--neon-cyan);
   text-shadow: 0 0 5px rgba(0, 240, 255, 0.5);
   animation: typeIn 0.3s ease-out;
+  font-size: 12px;
 }
 
 @keyframes typeIn {
@@ -561,9 +562,10 @@ body:hover .interaction-hints {
 .log-line::before {
   content: '›';
   position: absolute;
-  left: 0;
+  left: 2px;
   color: var(--neon-magenta);
   font-weight: bold;
+  font-size: 12px;
 }
 
 .log-line.system {
@@ -634,14 +636,14 @@ body:hover .interaction-hints {
 .input-area {
   display: flex;
   align-items: center;
-  margin-top: 8px;
-  padding: 8px 10px;
+  margin-top: 6px;
+  padding: 6px 8px;
   border: 1px solid var(--neon-orange);
   background: linear-gradient(90deg,
-    rgba(255, 107, 0, 0.1) 0%,
-    rgba(255, 107, 0, 0.05) 100%
+    rgba(255, 107, 0, 0.15) 0%,
+    rgba(255, 107, 0, 0.08) 100%
   );
-  border-radius: 4px;
+  border-radius: 3px;
   position: relative;
   overflow: hidden;
 }
@@ -669,11 +671,11 @@ body:hover .interaction-hints {
 
 .prompt {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: bold;
   color: var(--neon-orange);
   text-shadow: 0 0 5px var(--neon-orange);
-  margin-right: 8px;
+  margin-right: 6px;
   white-space: nowrap;
 }
 
@@ -683,7 +685,7 @@ body:hover .interaction-hints {
   border: none;
   color: #fff;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   outline: none;
   text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
   caret-color: var(--neon-cyan);
@@ -698,8 +700,8 @@ body:hover .interaction-hints {
 }
 
 .cursor-block {
-  width: 8px;
-  height: 14px;
+  width: 6px;
+  height: 12px;
   background: var(--neon-cyan);
   opacity: 0;
   animation: cursor-blink 0.8s infinite;

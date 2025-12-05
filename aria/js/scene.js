@@ -18,10 +18,10 @@ const CONFIG = {
         threshold: 0.6
     },
     camera: {
-        fov: 40,
+        fov: 35,
         near: 0.1,
         far: 1000,
-        startPos: { x: 0, y: 0, z: 18 }
+        startPos: { x: 0, y: 0, z: 12 }
     },
     rotation: {
         sensitivity: 0.5,
@@ -261,10 +261,9 @@ const terminalDiv = document.getElementById('terminal-source');
 terminalDiv.style.visibility = 'visible';
 
 const cssObject = new CSS3DObject(terminalDiv);
-// Scale: terminal is 380px, watch screen is ~3.6 units
-// 3.6 / 380 ≈ 0.00947
-cssObject.scale.set(0.0095, 0.0095, 0.0095);
-cssObject.position.set(0, 0, 0.55);
+// Make terminal fill the watch screen - larger scale for visibility
+cssObject.scale.set(0.012, 0.012, 0.012);
+cssObject.position.set(0, 0, 0.56);
 watchGroup.add(cssObject);
 
 updateLoadingProgress('Calibrating display matrix...', 60);
@@ -444,6 +443,10 @@ let mouseDownY = 0;
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let hoveredObject = null;
+let clickBlocked = false;
+
+// Get all clickable meshes from watch
+const clickableMeshes = watch.getClickableMeshes();
 
 document.addEventListener('mousemove', (e) => {
     mouseX = (e.clientX / window.innerWidth) * 2 - 1;
@@ -452,73 +455,91 @@ document.addEventListener('mousemove', (e) => {
     mouse.x = mouseX;
     mouse.y = mouseY;
     
-    if (isMouseDown) {
+    if (isMouseDown && !clickBlocked) {
         const deltaX = (e.clientX - mouseDownX) * 0.002;
         const deltaY = (e.clientY - mouseDownY) * 0.002;
         targetRotationY = deltaX * 2;
         targetRotationX = deltaY * 2;
-    } else {
+    } else if (!isMouseDown) {
         targetRotationX = mouseY * CONFIG.rotation.sensitivity;
         targetRotationY = mouseX * CONFIG.rotation.sensitivity;
     }
 });
 
 document.addEventListener('mousedown', (e) => {
-    isMouseDown = true;
     mouseDownX = e.clientX;
     mouseDownY = e.clientY;
     
-    // Check for button clicks
+    // Check for button clicks FIRST
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(watchGroup.children, true);
+    
+    // Check clickable meshes directly
+    const intersects = raycaster.intersectObjects(clickableMeshes, false);
     
     if (intersects.length > 0) {
         const obj = intersects[0].object;
-        if (obj.name === 'sendButton') {
-            watch.pressButton('sendButton');
-            addMiniLog('SEND: triggered', 'success');
-            // Trigger form submit if focused
-            const input = document.getElementById('command-input');
-            if (input && !input.disabled && input.value.trim()) {
-                input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+        clickBlocked = true; // Prevent rotation when clicking buttons
+        
+        if (obj.userData && obj.userData.isButton) {
+            const buttonType = obj.userData.buttonType;
+            
+            if (buttonType === 'send') {
+                watch.pressButton('sendButton');
+                addMiniLog('SEND: triggered', 'success');
+                // Trigger terminal send
+                if (window.terminalSend) {
+                    window.terminalSend();
+                }
+            } else if (buttonType === 'disconnect') {
+                watch.pressButton('disconnectButton');
+                addMiniLog('DISC: initiated', 'error');
+                // Trigger terminal disconnect
+                if (window.terminalDisconnect) {
+                    window.terminalDisconnect();
+                }
+            } else if (buttonType === 'crown') {
+                addMiniLog('CROWN: rotated', '');
             }
-        } else if (obj.name === 'disconnectButton') {
-            watch.pressButton('disconnectButton');
-            addMiniLog('DISC: initiated', 'error');
         }
+    } else {
+        isMouseDown = true;
+        clickBlocked = false;
     }
 });
 
 document.addEventListener('mouseup', () => {
     isMouseDown = false;
+    clickBlocked = false;
 });
 
 // Hover effects
 function checkHover() {
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(watchGroup.children, true);
+    const intersects = raycaster.intersectObjects(clickableMeshes, false);
     
     if (intersects.length > 0) {
         const obj = intersects[0].object;
-        if (obj.name && obj.name.includes('Button')) {
+        
+        if (obj.userData && obj.userData.isButton) {
+            const buttonName = obj.userData.buttonType === 'send' ? 'sendButton' : 
+                              obj.userData.buttonType === 'disconnect' ? 'disconnectButton' : 'crown';
+            
             if (hoveredObject !== obj) {
-                if (hoveredObject) {
-                    watch.hoverButton(hoveredObject.name, false);
+                if (hoveredObject && hoveredObject.userData) {
+                    const prevName = hoveredObject.userData.buttonType === 'send' ? 'sendButton' :
+                                    hoveredObject.userData.buttonType === 'disconnect' ? 'disconnectButton' : 'crown';
+                    watch.hoverButton(prevName, false);
                 }
                 hoveredObject = obj;
-                watch.hoverButton(obj.name, true);
+                watch.hoverButton(buttonName, true);
                 document.body.style.cursor = 'pointer';
             }
-        } else {
-            if (hoveredObject) {
-                watch.hoverButton(hoveredObject.name, false);
-                hoveredObject = null;
-            }
-            document.body.style.cursor = 'crosshair';
         }
     } else {
-        if (hoveredObject) {
-            watch.hoverButton(hoveredObject.name, false);
+        if (hoveredObject && hoveredObject.userData) {
+            const prevName = hoveredObject.userData.buttonType === 'send' ? 'sendButton' :
+                            hoveredObject.userData.buttonType === 'disconnect' ? 'disconnectButton' : 'crown';
+            watch.hoverButton(prevName, false);
             hoveredObject = null;
         }
         document.body.style.cursor = 'crosshair';
