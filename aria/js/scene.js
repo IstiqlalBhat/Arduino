@@ -3,7 +3,6 @@ import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { CyberWatch } from './watch-model.js';
 
@@ -13,94 +12,27 @@ import { CyberWatch } from './watch-model.js';
 
 const CONFIG = {
     bloom: {
-        strength: 1.8,
-        radius: 0.5,
-        threshold: 0.6
+        strength: 0.6,  // Reduced for less blur
+        radius: 0.3,
+        threshold: 0.8
     },
     camera: {
-        fov: 35,
+        fov: 45,
         near: 0.1,
         far: 1000,
-        startPos: { x: 0, y: 0, z: 12 }
+        startPos: { x: 0, y: 0, z: 14 }  // Good distance
     },
     rotation: {
-        sensitivity: 0.5,
-        dampening: 0.03,
-        maxAngle: 0.6
+        sensitivity: 0.4,
+        dampening: 0.05,
+        maxAngle: 0.5
     },
     effects: {
-        floatAmplitude: 0.15,
+        floatAmplitude: 0.1,
         floatSpeed: 0.5,
         breathingSpeed: 0.2,
-        breathingAmount: 0.02
+        breathingAmount: 0.015
     }
-};
-
-// ========================================
-// CHROMATIC ABERRATION SHADER
-// ========================================
-
-const ChromaticAberrationShader = {
-    uniforms: {
-        tDiffuse: { value: null },
-        amount: { value: 0.003 },
-        angle: { value: 0.0 }
-    },
-    vertexShader: `
-        varying vec2 vUv;
-        void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-    `,
-    fragmentShader: `
-        uniform sampler2D tDiffuse;
-        uniform float amount;
-        uniform float angle;
-        varying vec2 vUv;
-        
-        void main() {
-            vec2 offset = amount * vec2(cos(angle), sin(angle));
-            vec4 cr = texture2D(tDiffuse, vUv + offset);
-            vec4 cg = texture2D(tDiffuse, vUv);
-            vec4 cb = texture2D(tDiffuse, vUv - offset);
-            gl_FragColor = vec4(cr.r, cg.g, cb.b, cg.a);
-        }
-    `
-};
-
-// ========================================
-// VIGNETTE SHADER
-// ========================================
-
-const VignetteShader = {
-    uniforms: {
-        tDiffuse: { value: null },
-        darkness: { value: 0.6 },
-        offset: { value: 1.0 }
-    },
-    vertexShader: `
-        varying vec2 vUv;
-        void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-    `,
-    fragmentShader: `
-        uniform sampler2D tDiffuse;
-        uniform float darkness;
-        uniform float offset;
-        varying vec2 vUv;
-        
-        void main() {
-            vec4 color = texture2D(tDiffuse, vUv);
-            vec2 uv = (vUv - 0.5) * 2.0;
-            float vignette = 1.0 - dot(uv, uv) * darkness;
-            vignette = clamp(vignette, 0.0, 1.0);
-            color.rgb *= vignette;
-            gl_FragColor = color;
-        }
-    `
 };
 
 // ========================================
@@ -115,21 +47,10 @@ const loadingStatus = document.getElementById('loading-status');
 
 // Scene
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x050508, 0.012);
+scene.fog = new THREE.FogExp2(0x050508, 0.008);
 
-// Background with gradient
-const bgCanvas = document.createElement('canvas');
-bgCanvas.width = 512;
-bgCanvas.height = 512;
-const bgCtx = bgCanvas.getContext('2d');
-const bgGradient = bgCtx.createRadialGradient(256, 256, 0, 256, 256, 400);
-bgGradient.addColorStop(0, '#0a0a12');
-bgGradient.addColorStop(0.5, '#050508');
-bgGradient.addColorStop(1, '#000000');
-bgCtx.fillStyle = bgGradient;
-bgCtx.fillRect(0, 0, 512, 512);
-const bgTexture = new THREE.CanvasTexture(bgCanvas);
-scene.background = bgTexture;
+// Background
+scene.background = new THREE.Color(0x0a0a0f);
 
 // Camera
 const camera = new THREE.PerspectiveCamera(
@@ -157,7 +78,7 @@ const webglRenderer = new THREE.WebGLRenderer({
 webglRenderer.setSize(window.innerWidth, window.innerHeight);
 webglRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 webglRenderer.toneMapping = THREE.ACESFilmicToneMapping;
-webglRenderer.toneMappingExposure = 1.2;
+webglRenderer.toneMappingExposure = 1.0;
 webglRenderer.shadowMap.enabled = true;
 webglRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
 webglContainer.appendChild(webglRenderer.domElement);
@@ -168,7 +89,7 @@ cssRenderer.setSize(window.innerWidth, window.innerHeight);
 cssContainer.appendChild(cssRenderer.domElement);
 
 // ========================================
-// POST-PROCESSING
+// POST-PROCESSING (Simplified - less blur)
 // ========================================
 
 const composer = new EffectComposer(webglRenderer);
@@ -176,7 +97,7 @@ const composer = new EffectComposer(webglRenderer);
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
-// Bloom
+// Subtle Bloom
 const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
     CONFIG.bloom.strength,
@@ -184,14 +105,6 @@ const bloomPass = new UnrealBloomPass(
     CONFIG.bloom.threshold
 );
 composer.addPass(bloomPass);
-
-// Chromatic Aberration
-const chromaticPass = new ShaderPass(ChromaticAberrationShader);
-composer.addPass(chromaticPass);
-
-// Vignette
-const vignettePass = new ShaderPass(VignetteShader);
-composer.addPass(vignettePass);
 
 // Output
 const outputPass = new OutputPass();
@@ -202,56 +115,46 @@ composer.addPass(outputPass);
 // ========================================
 
 // Ambient
-const ambientLight = new THREE.AmbientLight(0x111122, 0.5);
+const ambientLight = new THREE.AmbientLight(0x333344, 0.8);
 scene.add(ambientLight);
 
-// Key light (warm, cinematic)
-const keyLight = new THREE.SpotLight(0xffa040, 800);
+// Key light (warm)
+const keyLight = new THREE.SpotLight(0xffa050, 500);
 keyLight.position.set(8, 6, 10);
 keyLight.angle = 0.6;
-keyLight.penumbra = 0.8;
+keyLight.penumbra = 0.6;
 keyLight.decay = 2;
 keyLight.castShadow = true;
-keyLight.shadow.mapSize.width = 1024;
-keyLight.shadow.mapSize.height = 1024;
-keyLight.shadow.bias = -0.0001;
 scene.add(keyLight);
 
 // Rim light (cool cyan)
-const rimLight = new THREE.SpotLight(0x00f0ff, 600);
-rimLight.position.set(-10, 3, 5);
+const rimLight = new THREE.SpotLight(0x00ccff, 400);
+rimLight.position.set(-8, 4, 6);
 rimLight.angle = 0.7;
-rimLight.penumbra = 0.6;
-rimLight.decay = 2;
+rimLight.penumbra = 0.5;
 scene.add(rimLight);
 
-// Fill light (magenta accent)
-const fillLight = new THREE.PointLight(0xff00ff, 150, 20);
-fillLight.position.set(-5, -4, 8);
+// Fill light
+const fillLight = new THREE.PointLight(0xff00aa, 80, 20);
+fillLight.position.set(-4, -3, 8);
 scene.add(fillLight);
 
-// Under-glow (neon)
-const underGlow = new THREE.PointLight(0x00ff88, 80, 15);
-underGlow.position.set(0, -6, 5);
-scene.add(underGlow);
-
-// Backlight
-const backLight = new THREE.PointLight(0x4400ff, 100, 25);
-backLight.position.set(0, 0, -10);
-scene.add(backLight);
+// Front light for visibility
+const frontLight = new THREE.DirectionalLight(0xffffff, 0.5);
+frontLight.position.set(0, 0, 10);
+scene.add(frontLight);
 
 // ========================================
 // WATCH MODEL
 // ========================================
 
-let loadProgress = 0;
-updateLoadingProgress('Creating neural pathways...', 10);
+updateLoadingProgress('Creating watch model...', 20);
 
 const watch = new CyberWatch();
 const watchGroup = watch.getMesh();
 scene.add(watchGroup);
 
-updateLoadingProgress('Initializing holographics...', 40);
+updateLoadingProgress('Initializing display...', 50);
 
 // ========================================
 // TERMINAL SCREEN (CSS3D)
@@ -261,45 +164,40 @@ const terminalDiv = document.getElementById('terminal-source');
 terminalDiv.style.visibility = 'visible';
 
 const cssObject = new CSS3DObject(terminalDiv);
-// Make terminal fill the watch screen - larger scale for visibility
-cssObject.scale.set(0.012, 0.012, 0.012);
-cssObject.position.set(0, 0, 0.56);
+// Scale to fit watch screen (3.4 units wide, terminal is 300px)
+cssObject.scale.set(0.0113, 0.0113, 0.0113);
+cssObject.position.set(0, 0, 0.55);
 watchGroup.add(cssObject);
 
-updateLoadingProgress('Calibrating display matrix...', 60);
+updateLoadingProgress('Connecting systems...', 80);
 
 // ========================================
-// PARTICLE SYSTEM (Floating debris)
+// PARTICLE SYSTEM
 // ========================================
 
-const particleCount = 200;
+const particleCount = 100;
 const particleGeometry = new THREE.BufferGeometry();
 const particlePositions = new Float32Array(particleCount * 3);
-const particleSizes = new Float32Array(particleCount);
 
 for (let i = 0; i < particleCount; i++) {
-    particlePositions[i * 3] = (Math.random() - 0.5) * 40;
-    particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 40;
-    particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 40;
-    particleSizes[i] = Math.random() * 0.05 + 0.01;
+    particlePositions[i * 3] = (Math.random() - 0.5) * 30;
+    particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 30;
+    particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 30;
 }
 
 particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-particleGeometry.setAttribute('size', new THREE.BufferAttribute(particleSizes, 1));
 
 const particleMaterial = new THREE.PointsMaterial({
     color: 0x00f0ff,
-    size: 0.08,
+    size: 0.05,
     transparent: true,
-    opacity: 0.4,
+    opacity: 0.3,
     blending: THREE.AdditiveBlending,
     depthWrite: false
 });
 
 const particles = new THREE.Points(particleGeometry, particleMaterial);
 scene.add(particles);
-
-updateLoadingProgress('Connecting to uplink...', 80);
 
 // ========================================
 // RAIN EFFECT
@@ -311,15 +209,15 @@ rainCanvas.width = window.innerWidth;
 rainCanvas.height = window.innerHeight;
 
 const raindrops = [];
-const rainCount = 150;
+const rainCount = 100;
 
 for (let i = 0; i < rainCount; i++) {
     raindrops.push({
         x: Math.random() * rainCanvas.width,
         y: Math.random() * rainCanvas.height,
-        length: Math.random() * 20 + 10,
-        speed: Math.random() * 8 + 4,
-        opacity: Math.random() * 0.3 + 0.1
+        length: Math.random() * 15 + 8,
+        speed: Math.random() * 6 + 3,
+        opacity: Math.random() * 0.2 + 0.05
     });
 }
 
@@ -328,10 +226,10 @@ function updateRain() {
     
     raindrops.forEach(drop => {
         rainCtx.beginPath();
-        rainCtx.strokeStyle = `rgba(0, 240, 255, ${drop.opacity})`;
+        rainCtx.strokeStyle = `rgba(0, 200, 255, ${drop.opacity})`;
         rainCtx.lineWidth = 1;
         rainCtx.moveTo(drop.x, drop.y);
-        rainCtx.lineTo(drop.x + 1, drop.y + drop.length);
+        rainCtx.lineTo(drop.x, drop.y + drop.length);
         rainCtx.stroke();
         
         drop.y += drop.speed;
@@ -351,38 +249,30 @@ const hexGrid = document.getElementById('hex-grid');
 function updateHexGrid() {
     const chars = '0123456789ABCDEF';
     let html = '';
-    for (let row = 0; row < 8; row++) {
-        for (let col = 0; col < 12; col++) {
-            let byte = '';
-            for (let i = 0; i < 2; i++) {
-                byte += chars[Math.floor(Math.random() * 16)];
-            }
-            html += byte + ' ';
+    for (let row = 0; row < 6; row++) {
+        for (let col = 0; col < 10; col++) {
+            html += chars[Math.floor(Math.random() * 16)] + chars[Math.floor(Math.random() * 16)] + ' ';
         }
         html += '\n';
     }
     hexGrid.textContent = html;
 }
-setInterval(updateHexGrid, 300);
+setInterval(updateHexGrid, 400);
 
 // ========================================
 // HUD UPDATES
 // ========================================
 
 function updateHUD() {
-    // Time
     const now = new Date();
-    const timeStr = now.toTimeString().split(' ')[0];
-    document.getElementById('hud-time').textContent = timeStr;
+    document.getElementById('hud-time').textContent = now.toTimeString().split(' ')[0];
     
-    // Date
     const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`;
     document.getElementById('hud-date').textContent = dateStr;
     
-    // Stats
-    const cpu = Math.floor(Math.random() * 30 + 30);
-    const mem = Math.floor(Math.random() * 20 + 50);
-    const net = Math.floor(Math.random() * 15 + 75);
+    const cpu = Math.floor(Math.random() * 25 + 35);
+    const mem = Math.floor(Math.random() * 15 + 55);
+    const net = Math.floor(Math.random() * 10 + 80);
     
     document.getElementById('cpu-bar').style.width = `${cpu}%`;
     document.getElementById('cpu-val').textContent = `${cpu}%`;
@@ -394,39 +284,30 @@ function updateHUD() {
 setInterval(updateHUD, 1000);
 updateHUD();
 
-// Mini console logs
+// Mini console
 function addMiniLog(msg, type = '') {
     const log = document.getElementById('mini-log');
     const entry = document.createElement('div');
     entry.className = `log-entry ${type}`;
     entry.textContent = `> ${msg}`;
     log.insertBefore(entry, log.firstChild);
-    if (log.children.length > 8) {
-        log.removeChild(log.lastChild);
-    }
+    if (log.children.length > 6) log.removeChild(log.lastChild);
 }
-
-// Export for use in app.js
 window.addMiniLog = addMiniLog;
 
 const randomLogs = [
-    ['PKT_RECV: 0x4A2F', ''],
+    ['PKT_RECV: OK', ''],
     ['HEARTBEAT: OK', 'success'],
-    ['SCAN: ports 80,443', ''],
-    ['PING: 24ms', ''],
-    ['CACHE_HIT: auth_token', 'success'],
-    ['ENCRYPT: AES-256', ''],
-    ['HANDSHAKE: verified', 'success'],
-    ['BUFFER: cleared', ''],
+    ['PING: 22ms', ''],
+    ['ENCRYPT: AES', ''],
 ];
-
 setInterval(() => {
     const [msg, type] = randomLogs[Math.floor(Math.random() * randomLogs.length)];
     addMiniLog(msg, type);
-}, 3000);
+}, 4000);
 
 // ========================================
-// INTERACTION STATE
+// INTERACTION - MOUSE & BUTTONS
 // ========================================
 
 let mouseX = 0;
@@ -435,119 +316,74 @@ let targetRotationX = 0;
 let targetRotationY = 0;
 let currentRotationX = 0;
 let currentRotationY = 0;
-let isMouseDown = false;
-let mouseDownX = 0;
-let mouseDownY = 0;
+let isDragging = false;
 
-// Raycaster for button interactions
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
-let hoveredObject = null;
-let clickBlocked = false;
 
-// Get all clickable meshes from watch
+// Get clickable button meshes
 const clickableMeshes = watch.getClickableMeshes();
 
 document.addEventListener('mousemove', (e) => {
     mouseX = (e.clientX / window.innerWidth) * 2 - 1;
     mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
-    
     mouse.x = mouseX;
     mouse.y = mouseY;
     
-    if (isMouseDown && !clickBlocked) {
-        const deltaX = (e.clientX - mouseDownX) * 0.002;
-        const deltaY = (e.clientY - mouseDownY) * 0.002;
-        targetRotationY = deltaX * 2;
-        targetRotationX = deltaY * 2;
-    } else if (!isMouseDown) {
+    // Rotate watch based on mouse position
+    if (!isDragging) {
         targetRotationX = mouseY * CONFIG.rotation.sensitivity;
         targetRotationY = mouseX * CONFIG.rotation.sensitivity;
     }
+    
+    // Check hover on buttons
+    checkButtonHover();
 });
 
-document.addEventListener('mousedown', (e) => {
-    mouseDownX = e.clientX;
-    mouseDownY = e.clientY;
-    
-    // Check for button clicks FIRST
+function checkButtonHover() {
     raycaster.setFromCamera(mouse, camera);
-    
-    // Check clickable meshes directly
     const intersects = raycaster.intersectObjects(clickableMeshes, false);
     
     if (intersects.length > 0) {
-        const obj = intersects[0].object;
-        clickBlocked = true; // Prevent rotation when clicking buttons
+        document.body.style.cursor = 'pointer';
+    } else {
+        document.body.style.cursor = 'crosshair';
+    }
+}
+
+// Button click handling
+document.addEventListener('click', (e) => {
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(clickableMeshes, false);
+    
+    if (intersects.length > 0) {
+        const clickedMesh = intersects[0].object;
         
-        if (obj.userData && obj.userData.isButton) {
-            const buttonType = obj.userData.buttonType;
+        if (clickedMesh.userData && clickedMesh.userData.isButton) {
+            const buttonType = clickedMesh.userData.buttonType;
+            
+            // Visual feedback
+            watch.pressButton(buttonType === 'send' ? 'sendButton' : 'disconnectButton');
             
             if (buttonType === 'send') {
-                watch.pressButton('sendButton');
-                addMiniLog('SEND: triggered', 'success');
+                addMiniLog('SEND pressed', 'success');
                 // Trigger terminal send
                 if (window.terminalSend) {
                     window.terminalSend();
                 }
             } else if (buttonType === 'disconnect') {
-                watch.pressButton('disconnectButton');
-                addMiniLog('DISC: initiated', 'error');
-                // Trigger terminal disconnect
+                addMiniLog('DISC pressed', 'error');
+                // Trigger disconnect
                 if (window.terminalDisconnect) {
                     window.terminalDisconnect();
                 }
-            } else if (buttonType === 'crown') {
-                addMiniLog('CROWN: rotated', '');
             }
         }
-    } else {
-        isMouseDown = true;
-        clickBlocked = false;
     }
 });
-
-document.addEventListener('mouseup', () => {
-    isMouseDown = false;
-    clickBlocked = false;
-});
-
-// Hover effects
-function checkHover() {
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(clickableMeshes, false);
-    
-    if (intersects.length > 0) {
-        const obj = intersects[0].object;
-        
-        if (obj.userData && obj.userData.isButton) {
-            const buttonName = obj.userData.buttonType === 'send' ? 'sendButton' : 
-                              obj.userData.buttonType === 'disconnect' ? 'disconnectButton' : 'crown';
-            
-            if (hoveredObject !== obj) {
-                if (hoveredObject && hoveredObject.userData) {
-                    const prevName = hoveredObject.userData.buttonType === 'send' ? 'sendButton' :
-                                    hoveredObject.userData.buttonType === 'disconnect' ? 'disconnectButton' : 'crown';
-                    watch.hoverButton(prevName, false);
-                }
-                hoveredObject = obj;
-                watch.hoverButton(buttonName, true);
-                document.body.style.cursor = 'pointer';
-            }
-        }
-    } else {
-        if (hoveredObject && hoveredObject.userData) {
-            const prevName = hoveredObject.userData.buttonType === 'send' ? 'sendButton' :
-                            hoveredObject.userData.buttonType === 'disconnect' ? 'disconnectButton' : 'crown';
-            watch.hoverButton(prevName, false);
-            hoveredObject = null;
-        }
-        document.body.style.cursor = 'crosshair';
-    }
-}
 
 // ========================================
-// RESIZE HANDLER
+// RESIZE
 // ========================================
 
 window.addEventListener('resize', () => {
@@ -568,7 +404,7 @@ window.addEventListener('resize', () => {
 });
 
 // ========================================
-// LOADING COMPLETION
+// LOADING COMPLETE
 // ========================================
 
 function updateLoadingProgress(status, progress) {
@@ -577,13 +413,11 @@ function updateLoadingProgress(status, progress) {
 }
 
 setTimeout(() => {
-    updateLoadingProgress('System ready.', 100);
+    updateLoadingProgress('Ready', 100);
     setTimeout(() => {
-        if (loadingOverlay) {
-            loadingOverlay.classList.add('hidden');
-        }
-    }, 500);
-}, 1500);
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
+    }, 400);
+}, 1200);
 
 // ========================================
 // ANIMATION LOOP
@@ -595,52 +429,29 @@ function animate() {
     requestAnimationFrame(animate);
     
     const time = clock.getElapsedTime();
-    const delta = clock.getDelta();
     
     // Smooth rotation
     currentRotationX += (targetRotationX - currentRotationX) * CONFIG.rotation.dampening;
     currentRotationY += (targetRotationY - currentRotationY) * CONFIG.rotation.dampening;
     
-    // Clamp rotation
+    // Clamp
     currentRotationX = Math.max(-CONFIG.rotation.maxAngle, Math.min(CONFIG.rotation.maxAngle, currentRotationX));
     currentRotationY = Math.max(-CONFIG.rotation.maxAngle, Math.min(CONFIG.rotation.maxAngle, currentRotationY));
     
     watchGroup.rotation.x = currentRotationX;
     watchGroup.rotation.y = currentRotationY;
     
-    // Floating animation
+    // Float animation
     watchGroup.position.y = Math.sin(time * CONFIG.effects.floatSpeed) * CONFIG.effects.floatAmplitude;
-    
-    // Breathing rotation
     watchGroup.rotation.z = Math.sin(time * CONFIG.effects.breathingSpeed) * CONFIG.effects.breathingAmount;
     
     // Update pulse ring
     watch.updatePulseRing(time);
     
-    // Particle animation
-    const positions = particleGeometry.attributes.position.array;
-    for (let i = 0; i < particleCount; i++) {
-        positions[i * 3 + 1] -= 0.01; // Fall down slowly
-        if (positions[i * 3 + 1] < -20) {
-            positions[i * 3 + 1] = 20;
-        }
-    }
-    particleGeometry.attributes.position.needsUpdate = true;
+    // Particles
+    particles.rotation.y += 0.0001;
     
-    // Rotate particles
-    particles.rotation.y += 0.0002;
-    
-    // Light animations
-    fillLight.intensity = 150 + Math.sin(time * 2) * 30;
-    underGlow.intensity = 80 + Math.sin(time * 1.5) * 20;
-    
-    // Chromatic aberration pulse
-    chromaticPass.uniforms.amount.value = 0.002 + Math.sin(time) * 0.001;
-    
-    // Check hover state
-    checkHover();
-    
-    // Update rain
+    // Rain
     updateRain();
     
     // Render
@@ -650,5 +461,4 @@ function animate() {
 
 animate();
 
-// Export watch for external access
 window.cyberWatch = watch;
