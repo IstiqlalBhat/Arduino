@@ -1,7 +1,7 @@
 // Vercel Serverless Function - PIN Verification
 // The SYSTEM_PIN is stored as an environment variable in Vercel dashboard
 
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -63,7 +63,7 @@ export default function handler(req, res) {
             error: 'Verification failed' 
         });
     }
-}
+};
 
 // Constant-time string comparison to prevent timing attacks
 function timingSafeEqual(a, b) {
@@ -87,4 +87,3 @@ function generateSessionToken() {
     }
     return token;
 }
-
